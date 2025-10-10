@@ -12,10 +12,10 @@ export default function Home() {
       <header className="flex justify-between items-center px-14 py-5 bg-white/40 backdrop-blur-md border-b border-white/20 shadow-md">
         <div className="flex items-center">
           <Image
-            src="/InsightEd.png"
+            src="/insighted.png"
             alt="InsightEd Logo"
-            width={60}
-            height={60}
+            width={80}
+            height={80}
             className="mr-3 transition-transform duration-300 hover:rotate-6 hover:scale-105"
           />
           <h1 className="text-2xl text-blue-700 tracking-wide font-semibold">InsightEd</h1>
