@@ -65,7 +65,7 @@ export default function ChatPage() {
         {/* Header */}
         <div className="bg-blue-700 text-white flex items-center p-4">
           <Image
-            src="/InsightEd.png"
+            src="/insighted.png"
             alt="InsightEd Logo"
             width={45}
             height={45}
