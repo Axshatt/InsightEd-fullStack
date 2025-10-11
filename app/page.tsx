@@ -105,7 +105,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center bg-blue-700 text-white py-4 text-sm">
-        © 2025 InsightEd | Built with 💙 by Team HACKMANTHAN
+        © 2025 InsightEd | Built with 💙 by Team InsightEd
       </footer>
     </main>
   );
