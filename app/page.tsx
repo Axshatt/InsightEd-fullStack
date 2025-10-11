@@ -96,7 +96,7 @@ export default function Home() {
 
       {/* Team Section */}
       <section id="team" className="text-center py-16 px-6">
-        <h3 className="text-2xl font-semibold text-blue-800 mb-4">Team HACKMANTHAN</h3>
+        <h3 className="text-2xl font-semibold text-blue-800 mb-4">Team InsightEd</h3>
         <p className="max-w-2xl mx-auto text-gray-700 leading-relaxed">
           We&apos;re a group of passionate learners from DDUGU, building smart solutions to make education fun and insightful.
         </p>
