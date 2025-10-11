@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
+import { MathJax, MathJaxContext } from "better-react-mathjax";
 
 interface Message {
   sender: "bot" | "user";
@@ -14,10 +15,11 @@ export default function ChatPage() {
       text: "👋 Hi! I’m InsightEd. Tell me your marks or ask me anything about your studies.",
     },
   ]);
+
   const [input, setInput] = useState("");
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
-  // Auto scroll to bottom on new message
+  // Auto-scroll to bottom when new message appears
   useEffect(() => {
     chatWindowRef.current?.scrollTo({
       top: chatWindowRef.current.scrollHeight,
@@ -25,45 +27,63 @@ export default function ChatPage() {
     });
   }, [messages]);
 
- const sendMessage = async () => {
-  if (!input.trim()) return;
+  // Function to clean markdown while preserving math
+  const cleanMarkdown = (text: string) => {
+    return text
+      .replace(/\*\*/g, "") // remove bold markers
+      .replace(/\*/g, "")   // remove italics
+      .replace(/`/g, "")    // remove code backticks
+      .replace(/#+/g, "")   // remove headings
+      .replace(/_/g, "")    // remove underscores
+      .replace(/---/g, "")  // remove separators
+      .replace(/\|/g, " ")  // remove table pipes
+      .replace(/\[(.*?)\]\(.*?\)/g, "$1") // keep link text only
+      .trim();
+  };
 
-  const userMsg: Message = { sender: "user", text: input.trim() };
-  setMessages((prev) => [...prev, userMsg]);
-  setInput("");
+  const sendMessage = async () => {
+    if (!input.trim()) return;
 
-  // Add "thinking" message
-  const thinkingMsg: Message = { sender: "bot", text: "⏳ Thinking..." };
-  setMessages((prev) => [...prev, thinkingMsg]);
+    const userMsg: Message = { sender: "user", text: input.trim() };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
 
-  try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userMsg.text }),
-    });
+    // Temporary "thinking" message
+    const thinkingMsg: Message = { sender: "bot", text: "⏳ Thinking..." };
+    setMessages((prev) => [...prev, thinkingMsg]);
 
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMsg.text }),
+      });
 
-    // Replace the "thinking" message with AI response
-    setMessages((prev) => [
-      ...prev.slice(0, -1),
-      { sender: "bot", text: data.reply },
-    ]);
-  } catch (err) {
-    setMessages((prev) => [
-      ...prev.slice(0, -1),
-      { sender: "bot", text: "⚠️ Error: Couldn't get a response." },
-    ]);
-  }
-};
+      const data = await res.json();
+      const cleanedReply = cleanMarkdown(data.reply);
 
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { sender: "bot", text: cleanedReply },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { sender: "bot", text: "⚠️ Error: Couldn't get a response." },
+      ]);
+    }
+  };
 
   return (
-    <main className="flex justify-center items-center min-h-screen bg-gradient-to-br from-sky-100 to-sky-200 font-poppins">
-      <div className="w-[400px] bg-white rounded-3xl shadow-xl overflow-hidden">
+    <MathJaxContext
+      config={{
+        loader: { load: ["input/tex", "output/chtml"] },
+        tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] },
+      }}
+    >
+      <main className="flex flex-col h-screen w-screen bg-gradient-to-br from-sky-100 to-sky-200 font-poppins">
         {/* Header */}
-        <div className="bg-blue-700 text-white flex items-center p-4">
+        <header className="bg-blue-700 text-white flex items-center p-4 shadow-md">
           <Image
             src="/insighted.png"
             alt="InsightEd Logo"
@@ -71,47 +91,47 @@ export default function ChatPage() {
             height={45}
             className="mr-3"
           />
-          <h2 className="text-lg font-semibold">InsightEd - Study Buddy</h2>
-        </div>
+          <h2 className="text-xl font-semibold">InsightEd — Study Buddy</h2>
+        </header>
 
         {/* Chat Window */}
-        <div
+        <section
           id="chat-window"
           ref={chatWindowRef}
-          className="h-[400px] p-4 overflow-y-auto bg-[#f4f9ff]"
+          className="flex-1 p-6 overflow-y-auto bg-[#f4f9ff]"
         >
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`my-2 p-3 rounded-2xl max-w-[80%] ${
-                msg.sender === "bot"
+              className={`my-2 p-3 rounded-2xl max-w-[25%] break-words whitespace-pre-wrap overflow-wrap-anywhere ${msg.sender === "bot"
                   ? "bg-blue-100 text-blue-900"
                   : "bg-blue-700 text-white ml-auto"
-              }`}
+                }`}
             >
-              {msg.text}
+              <MathJax dynamic>{msg.text}</MathJax>
             </div>
+
           ))}
-        </div>
+        </section>
 
         {/* Input Area */}
-        <div className="flex border-t border-gray-200">
+        <footer className="flex items-center border-t border-gray-300 p-3 bg-white">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            className="flex-1 p-3 border-none outline-none text-gray-700"
+            className="flex-1 p-3 border-none outline-none text-gray-700 text-base"
           />
           <button
             onClick={sendMessage}
-            className="bg-blue-700 text-white px-5 text-lg hover:bg-blue-800 transition"
+            className="bg-blue-700 text-white px-6 py-2 text-lg rounded-lg hover:bg-blue-800 transition"
           >
             ➤
           </button>
-        </div>
-      </div>
-    </main>
+        </footer>
+      </main>
+    </MathJaxContext>
   );
 }
