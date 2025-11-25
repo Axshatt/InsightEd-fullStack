@@ -11,11 +11,10 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   try {
-    const { message } = await req.json();
+    const { message, history = [] } = await req.json();
 
-    const completion = await openai.chat.completions.create({
-      model: "alibaba/tongyi-deepresearch-30b-a3b:free",
-      messages: [
+    // Build messages array with conversation history
+    const messages = [
         {
           role: "system",
           content: `You are InsightEd, a helpful and friendly academic assistant.
@@ -23,11 +22,23 @@ export async function POST(req) {
           If asked something unrelated, respond with:
           "I'm only here to help with your studies and academic life 😊"`,
         },
-        {
-          role: "user",
-          content: message,
-        },
-      ],
+    ];
+
+    // Add conversation history (excluding thinking messages)
+    history.forEach((msg) => {
+      if (msg.sender === "user") {
+        messages.push({ role: "user", content: msg.text });
+      } else if (msg.sender === "bot" && msg.text !== "⏳ Thinking...") {
+        messages.push({ role: "assistant", content: msg.text });
+      }
+    });
+
+    // Add current user message
+    messages.push({ role: "user", content: message });
+
+    const completion = await openai.chat.completions.create({
+      model: "alibaba/tongyi-deepresearch-30b-a3b:free",
+      messages: messages,
     });
 
     const reply = completion.choices[0].message.content.trim();
@@ -39,7 +50,7 @@ export async function POST(req) {
     console.error(error);
     return new Response(
       JSON.stringify({ reply: "⚠️ Sorry, something went wrong." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" }}
     );
   }
 }
